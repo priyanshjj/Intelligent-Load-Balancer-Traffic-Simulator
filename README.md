@@ -19,8 +19,8 @@ Configured remote:
 
 Phase 0 - Repository Audit ✓
 Phase 1 - Project Foundation ✓
-Phase 2 - Backend Server Model pending
-Phase 3 - Load Balancing Strategy Interface pending
+Phase 2 - Backend Server Model ✓
+Phase 3 - Load Balancing Strategy Interface ✓
 Phase 4 - Round Robin pending
 Phase 5 - Least Connections pending
 Phase 6 - Load Balancer Core pending

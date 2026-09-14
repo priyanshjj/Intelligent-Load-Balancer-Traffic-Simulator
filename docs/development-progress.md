@@ -27,15 +27,33 @@ Status: Complete
 - Shared common types and logger foundation are in place.
 - Local build and test execution have been validated with the WinLibs GCC toolchain.
 
+## Phase 2 — Backend Server Model
+
+Status: Complete
+
+### Findings
+- Thread-safe backend server lifecycle has been implemented.
+- Health state transitions, request processing, and connection tracking are validated.
+- The project continues to compile cleanly under the MinGW toolchain.
+
+## Phase 3 — Load Balancing Strategy Interface
+
+Status: Complete
+
+### Findings
+- Abstract strategy interface is in place.
+- Round-robin and least-connections strategies are implemented and tested independently.
+- Selection logic skips unhealthy servers and respects deterministic behavior.
+
 ### Next phase
-- Phase 2: implement the backend server model and verify thread-safe server behavior.
+- Phase 4: implement the dedicated round-robin strategy behavior and benchmark-oriented validation.
 
 ## Roadmap
 
 - Phase 0 - Repository Audit ✓
 - Phase 1 - Project Foundation ✓
-- Phase 2 - Backend Server Model pending
-- Phase 3 - Load Balancing Strategy Interface pending
+- Phase 2 - Backend Server Model ✓
+- Phase 3 - Load Balancing Strategy Interface ✓
 - Phase 4 - Round Robin pending
 - Phase 5 - Least Connections pending
 - Phase 6 - Load Balancer Core pending

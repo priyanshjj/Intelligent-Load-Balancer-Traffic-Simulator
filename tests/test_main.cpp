@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -45,23 +46,37 @@ int runAllTests() {
     server1.stop();
     failures += !expect(server1.getStatus() == lb::ServerStatus::STOPPED, "stop updates status");
 
-    lb::BackendServer unhealthy("10.0.0.2", 8082, 2);
-    unhealthy.simulateFailure();
-    lb::BackendServer healthy("10.0.0.3", 8083, 2);
-    std::vector<lb::BackendServer*> servers = {&healthy, &unhealthy};
+    lb::BackendServer a("10.0.0.2", 8082, 5);
+    lb::BackendServer b("10.0.0.3", 8083, 5);
+    lb::BackendServer c("10.0.0.4", 8084, 5);
+    std::vector<lb::BackendServer*> servers = {&a, &b, &c};
 
     lb::RoundRobinStrategy rr;
-    auto* selected = rr.selectServer(servers);
-    failures += !expect(selected == &healthy, "round robin skips unhealthy server");
+    failures += !expect(rr.selectServer(servers) == &a, "round robin first selection");
+    failures += !expect(rr.selectServer(servers) == &b, "round robin second selection");
+    failures += !expect(rr.selectServer(servers) == &c, "round robin third selection");
+    failures += !expect(rr.selectServer(servers) == &a, "round robin wraps around");
 
-    lb::LeastConnectionsStrategy lc;
-    healthy.incrementConnections();
-    auto* leastSelected = lc.selectServer(servers);
-    failures += !expect(leastSelected == &unhealthy || leastSelected == &healthy, "least connections chooses candidate");
+    b.simulateFailure();
+    failures += !expect(rr.selectServer(servers) == &c, "round robin skips unhealthy server");
+
+    lb::LeastConnectionsStrategy least;
+    a.incrementConnections();
+    a.incrementConnections();
+    c.incrementConnections();
+    failures += !expect(least.selectServer(servers) == &c || least.selectServer(servers) == &a, "least connections chooses minimum load");
+
+    lb::BackendServer d("10.0.0.5", 8085, 5);
+    lb::BackendServer e("10.0.0.6", 8086, 5);
+    d.simulateFailure();
+    e.simulateFailure();
+    std::vector<lb::BackendServer*> unhealthyServers = {&d, &e};
+    failures += !expect(least.selectServer(unhealthyServers) == nullptr, "all unhealthy returns null");
 
     lb::LoadBalancer balancer;
-    balancer.addServer(&healthy);
-    balancer.addServer(&unhealthy);
+    balancer.addServer(&a);
+    balancer.addServer(&b);
+    balancer.addServer(&c);
     auto request = balancer.routeRequest(10, 128, 10);
     failures += !expect(request.status == lb::RequestStatus::SUCCESS || request.status == lb::RequestStatus::REJECTED,
                         "routeRequest returns valid lifecycle state");
@@ -74,7 +89,7 @@ int runAllTests() {
 int main() {
     const int failures = runAllTests();
     if (failures == 0) {
-        std::cout << "All backend server and routing tests passed." << std::endl;
+        std::cout << "All backend server and strategy tests passed." << std::endl;
         return 0;
     }
     std::cerr << failures << " test(s) failed." << std::endl;
