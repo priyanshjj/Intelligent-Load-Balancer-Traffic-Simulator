@@ -3,6 +3,7 @@
 #include "LoadBalancingStrategy.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -77,9 +78,17 @@ int runAllTests() {
     balancer.addServer(&a);
     balancer.addServer(&b);
     balancer.addServer(&c);
+    balancer.setStrategy(std::make_unique<lb::LeastConnectionsStrategy>());
     auto request = balancer.routeRequest(10, 128, 10);
     failures += !expect(request.status == lb::RequestStatus::SUCCESS || request.status == lb::RequestStatus::REJECTED,
                         "routeRequest returns valid lifecycle state");
+    failures += !expect(balancer.serverCount() == 3, "load balancer tracks added servers");
+
+    balancer.removeServer(b.getId());
+    failures += !expect(balancer.serverCount() == 2, "load balancer removes tracked server");
+
+    const auto healthyServers = balancer.getHealthyServers();
+    failures += !expect(!healthyServers.empty(), "healthy server list is populated");
 
     return failures;
 }

@@ -45,8 +45,35 @@ Status: Complete
 - Round-robin and least-connections strategies are implemented and tested independently.
 - Selection logic skips unhealthy servers and respects deterministic behavior.
 
+## Phase 4 — Round Robin
+
+Status: Complete
+
+### Findings
+- Forward-only round-robin selection is implemented and maintains a stable index across calls.
+- The strategy skips unhealthy servers and wraps correctly after the last healthy member.
+- The logic is validated through a dedicated test sequence in the build pipeline.
+
+## Phase 5 — Least Connections
+
+Status: Complete
+
+### Findings
+- Least-connections routing selects the healthiest candidate by minimum active connection count.
+- The algorithm ignores unhealthy servers and remains deterministic for equally loaded candidates.
+- The behavior is exercised by the project tests and verified in the build output.
+
+## Phase 6 — Load Balancer Core
+
+Status: Complete
+
+### Findings
+- Core balancer state is tracked with server registration, removal, and strategy replacement.
+- Routing delegates to the active strategy and rejects requests when no healthy backend is available.
+- The core behavior is validated by request routing and server management tests in the build pipeline.
+
 ### Next phase
-- Phase 4: implement the dedicated round-robin strategy behavior and benchmark-oriented validation.
+- Phase 7: implement and validate the traffic simulator and concurrent client workload generation.
 
 ## Roadmap
 
@@ -54,9 +81,9 @@ Status: Complete
 - Phase 1 - Project Foundation ✓
 - Phase 2 - Backend Server Model ✓
 - Phase 3 - Load Balancing Strategy Interface ✓
-- Phase 4 - Round Robin pending
-- Phase 5 - Least Connections pending
-- Phase 6 - Load Balancer Core pending
+- Phase 4 - Round Robin ✓
+- Phase 5 - Least Connections ✓
+- Phase 6 - Load Balancer Core ✓
 - Phase 7 - Traffic Simulator pending
 - Phase 8 - Health Monitoring pending
 - Phase 9 - Failure Injection and Recovery pending
