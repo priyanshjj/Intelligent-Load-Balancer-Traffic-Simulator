@@ -18,10 +18,17 @@ add_executable(load_balancer
     src/LoadBalancingStrategy.cpp
     src/LoadBalancer.cpp
     src/TrafficSimulator.cpp
+    src/Config.cpp
+    src/MetricsCollector.cpp
+    src/Benchmark.cpp
+    src/TcpServer.cpp
 )
 
 target_include_directories(load_balancer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(load_balancer PRIVATE load_balancer_lib)
+if (WIN32)
+    target_link_libraries(load_balancer PRIVATE ws2_32)
+endif()
 
 add_executable(load_balancer_tests
     tests/test_main.cpp
@@ -30,9 +37,16 @@ add_executable(load_balancer_tests
     src/LoadBalancingStrategy.cpp
     src/LoadBalancer.cpp
     src/TrafficSimulator.cpp
+    src/Config.cpp
+    src/MetricsCollector.cpp
+    src/Benchmark.cpp
+    src/TcpServer.cpp
 )
 
 target_include_directories(load_balancer_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(load_balancer_tests PRIVATE load_balancer_lib)
+if (WIN32)
+    target_link_libraries(load_balancer_tests PRIVATE ws2_32)
+endif()
 
 add_test(NAME load_balancer_tests COMMAND load_balancer_tests)

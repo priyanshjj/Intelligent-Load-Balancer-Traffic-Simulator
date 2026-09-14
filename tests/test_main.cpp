@@ -1,6 +1,10 @@
 #include "BackendServer.h"
+#include "Benchmark.h"
+#include "Config.h"
 #include "LoadBalancer.h"
 #include "LoadBalancingStrategy.h"
+#include "MetricsCollector.h"
+#include "TcpServer.h"
 
 #include <iostream>
 #include <memory>
@@ -89,6 +93,38 @@ int runAllTests() {
 
     const auto healthyServers = balancer.getHealthyServers();
     failures += !expect(!healthyServers.empty(), "healthy server list is populated");
+
+    const auto parsed = lb::parseConfig({"load_balancer", "--strategy", "round_robin", "--clients", "4", "--rate", "100"});
+    failures += !expect(parsed.strategy == lb::StrategyType::ROUND_ROBIN, "config parser reads strategy");
+    failures += !expect(parsed.clientCount == 4, "config parser reads client count");
+    failures += !expect(parsed.requestRate == 100, "config parser reads request rate");
+
+    lb::MetricsCollector collector;
+    lb::Request successRequest{};
+    successRequest.id = 1;
+    successRequest.clientId = 42;
+    successRequest.status = lb::RequestStatus::SUCCESS;
+    successRequest.responseTimeMs = 15;
+    lb::Request failedRequest{};
+    failedRequest.id = 2;
+    failedRequest.clientId = 42;
+    failedRequest.status = lb::RequestStatus::FAILED;
+    failedRequest.responseTimeMs = 35;
+    collector.recordRequest(successRequest);
+    collector.recordRequest(failedRequest);
+    auto snapshot = collector.snapshot();
+    failures += !expect(snapshot.totalRequests == 2, "metrics collector counts requests");
+    failures += !expect(snapshot.successfulRequests == 1, "metrics collector counts successes");
+    failures += !expect(snapshot.failedRequests == 1, "metrics collector counts failures");
+
+    std::vector<lb::BackendServer*> benchmarkServers = {&a, &c};
+    auto benchmarkResult = lb::BenchmarkRunner::compareStrategies(benchmarkServers, 30, 10);
+    failures += !expect(!benchmarkResult.empty(), "benchmark returns strategy results");
+    failures += !expect(benchmarkResult.size() >= 2, "benchmark includes both strategies");
+
+    lb::TcpServer server(9090);
+    failures += !expect(server.listen(), "TCP server starts listening");
+    failures += !expect(server.isListening(), "TCP server reports active status");
 
     return failures;
 }
